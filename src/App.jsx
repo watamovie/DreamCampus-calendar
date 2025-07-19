@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { DateTime } from 'luxon';
+import React, { useState, useEffect } from 'react';
 import { buildICS, downloadICS } from './utils/icsHelpers.js';
 import { classifyTag, extractLocation } from './utils/parsers.js';
 
@@ -16,15 +15,12 @@ export default function App () {
   const [rows, setRows]       = useState([]);
   const [rawInput, setRawInput] = useState('');
   const [errors, setErrors]   = useState([]);
-  const [autoReadError, setAutoReadError] = useState(false);
-
-  /* 2-1-b. 自動読込フラグ */
-  const needsAutoRead = useRef(true);
 
   /* 2-2. クリップボード読み取りボタン */
   async function handleReadClipboard () {
     try {
       const text = await navigator.clipboard.readText();
+      setRawInput(text);
       parseJson(text);
     } catch (err) {
       alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
@@ -32,7 +28,7 @@ export default function App () {
   }
 
   /* 2-3. JSON 解析 */
-  function parseJson (text) {
+  function parseJson (text, showAlert = true) {
     try {
       // 先頭/末尾のゴミ除去
       const cleaned = text.trim().replace(/^[^\[]*/, '').replace(/[^\]]*$/, '');
@@ -55,8 +51,9 @@ export default function App () {
       setRows(mapped);
       setErrors([]);
     } catch (e) {
-      alert('JSON 解析に失敗しました');
+      if (showAlert) alert('JSON 解析に失敗しました');
       console.error(e);
+      if (!showAlert) setRows([]);
     }
   }
 
@@ -83,35 +80,7 @@ export default function App () {
 
   const isValid = errors.length === 0 && rows.length > 0;
 
-  /* 2-5-b. 最初のタップで自動読込 */
-  useEffect(() => {
-    function handleFirstPointer () {
-      if (!needsAutoRead.current) return;
-      needsAutoRead.current = false;
-      document.body.removeEventListener('pointerdown', handleFirstPointer);
-      autoReadClipboard();
-    }
-    document.body.addEventListener('pointerdown', handleFirstPointer, { once: true });
-
-    return () => {
-      document.body.removeEventListener('pointerdown', handleFirstPointer);
-    };
-  }, []);
-
-  /* 自動クリップボード読込本体 */
-  async function autoReadClipboard () {
-    try {
-      const txt = await navigator.clipboard.readText();
-      if (txt.trim().startsWith('[')) {
-        parseJson(txt);
-        return;
-      }
-      throw new Error('JSON らしい文字列ではなかった');
-    } catch (e) {
-      console.warn('auto clipboard read failed:', e);
-      setAutoReadError(true);
-    }
-  }
+  // 自動読込機能は廃止
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {
@@ -129,23 +98,15 @@ export default function App () {
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <button onClick={handleReadClipboard}>クリップ読み込み</button>
-        <button onClick={() => parseJson(rawInput)}>貼り付け → 解析</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
       </div>
 
-      {autoReadError && (
-        <p style={{ color: 'orange' }}>
-          クリップボードの自動取得に失敗しました。<br />
-          上の <b>「クリップ読み込み」</b> ボタンを押してください。
-        </p>
-      )}
-
-      {/* 保険のテキストエリア */}
       <textarea
-        placeholder="Clipboard が読めない環境用"
+        autoFocus
+        placeholder="ここにイベント JSON を貼り付けてください"
         style={{ width: '100%', minHeight: '6rem', marginTop: '0.5rem' }}
         value={rawInput}
-        onChange={e => setRawInput(e.target.value)}
+        onInput={e => { const txt = e.target.value; setRawInput(txt); parseJson(txt, false); }}
       />
 
       {/* 編集テーブル */}
