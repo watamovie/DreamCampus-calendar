@@ -83,24 +83,34 @@ export default function App () {
 
   const isValid = errors.length === 0 && rows.length > 0;
 
-  /* 2-5-b. 最初のタップで自動読込 */
+  /* 2-5-b. 最初のタップで自動読込 (iOS 対応) */
   useEffect(() => {
-    function handleFirstPointer () {
+    function handleFirstInteraction () {
       if (!needsAutoRead.current) return;
       needsAutoRead.current = false;
-      document.body.removeEventListener('pointerdown', handleFirstPointer);
+      removeListeners();
       autoReadClipboard();
     }
-    document.body.addEventListener('pointerdown', handleFirstPointer, { once: true });
 
-    return () => {
-      document.body.removeEventListener('pointerdown', handleFirstPointer);
-    };
+    function removeListeners () {
+      document.body.removeEventListener('pointerdown', handleFirstInteraction);
+      document.body.removeEventListener('touchstart', handleFirstInteraction);
+      document.body.removeEventListener('mousedown', handleFirstInteraction);
+    }
+
+    document.body.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+    document.body.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    document.body.addEventListener('mousedown', handleFirstInteraction, { once: true });
+
+    return removeListeners;
   }, []);
 
   /* 自動クリップボード読込本体 */
   async function autoReadClipboard () {
     try {
+      if (!(navigator.clipboard && navigator.clipboard.readText)) {
+        throw new Error('Clipboard API not supported');
+      }
       const txt = await navigator.clipboard.readText();
       if (txt.trim().startsWith('[')) {
         parseJson(txt);
