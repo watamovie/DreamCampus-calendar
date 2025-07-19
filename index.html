@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>JSON → ICS 変換ツール</title>
+
+    <!-- Vite が自動注入する CSS も考慮して最低限のリセット -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sanitize.css" />
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+
+  <body class="dc-bg">
+    <noscript>JavaScript を有効にしてください。</noscript>
+    <div id="root"></div>
+
+    <!-- Vite ビルド後に /assets/main.js が注入される -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

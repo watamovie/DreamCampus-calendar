@@ -1,0 +1,87 @@
+/* テーマ変数 ― ダークモード対応 */
+:root {
+    --bg-light: #f5f5f5;
+    --card-light: #fff;
+    --border-light: #ccc;
+    --text-light: #111;
+  
+    --bg-dark: #121212;
+    --card-dark: #1a1a1a;
+    --border-dark: #333;
+    --text-dark: #eee;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: var(--bg-dark);
+      --card: var(--card-dark);
+      --border: var(--border-dark);
+      --text: var(--text-dark);
+    }
+  }
+  @media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
+    :root {
+      --bg: var(--bg-light);
+      --card: var(--card-light);
+      --border: var(--border-light);
+      --text: var(--text-light);
+    }
+  }
+  
+  body,
+  textarea,
+  input,
+  select,
+  button {
+    font-family: system-ui, sans-serif;
+    font-size: 16px;
+    color: var(--text);
+  }
+  
+  .dc-bg {
+    background: var(--bg);
+    margin: 0;
+    padding: 1rem;
+  }
+  
+  button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  button:not(:disabled):hover {
+    background: rgba(0 0 0 / 0.04);
+  }
+  
+  /* テーブル */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  th,
+  td {
+    border: 1px solid var(--border);
+    padding: 0.4rem;
+  }
+  th {
+    background: var(--card);
+    position: sticky;
+    top: 0;
+  }
+  
+  /* スマホでは列を潰しすぎないよう水平スクロール */
+  @media (max-width: 640px) {
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
