@@ -28,11 +28,14 @@
     }
   }
   
-  body,
-  textarea,
-  input,
-  select,
-  button {
+body,
+textarea,
+input,
+select,
+button,
+th,
+td,
+a {
     font-family: system-ui, sans-serif;
     font-size: 16px;
     color: var(--text);
@@ -55,8 +58,8 @@
   flex-wrap: wrap;
 }
 
-.button-row button,
-.button-row a.button-link {
+
+.button-row button {
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--card);
@@ -66,15 +69,33 @@
   text-decoration: none;
   display: inline-block;
 }
+.button-row a.button-link {
+  padding: 0.5rem;
+  text-decoration: underline;
+  color: var(--text);
+  background: transparent;
+  border: none;
+}
 .button-row button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.button-row button:not(:disabled):hover,
-.button-row a.button-link:hover {
+.button-row button:not(:disabled):hover {
   background: rgba(0 0 0 / 0.04);
 }
-  
+.button-row a.button-link:hover {
+  opacity: 0.8;
+}
+
+.invalid {
+  border: 2px solid #f66 !important;
+}
+
+.error-list {
+  color: #f66;
+  margin-top: 0.5rem;
+}
+
   /* テーブル */
   table {
     width: 100%;
@@ -85,6 +106,8 @@
   td {
     border: 1px solid var(--border);
     padding: 0.4rem;
+    background: var(--card);
+    color: var(--text);
   }
   th {
     background: var(--card);
