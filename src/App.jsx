@@ -18,6 +18,7 @@ export default function App () {
   const [errors, setErrors]   = useState([]);
   const [warnings, setWarnings] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [toast, setToast] = useState('');
 
   // 初回マウント時にローカル保存を復元
   useEffect(() => {
@@ -202,6 +203,8 @@ export default function App () {
     const last  = cur.at(-1).date;
     const filename = `schedule_${first}_to_${last}.ics`;
     downloadICS(icsText, filename);
+    setToast('ICSファイルをダウンロードしました');
+    setTimeout(() => setToast(''), 3000);
   }
 
   function renderRow(r, idx = 0, arr = []) {
@@ -366,5 +369,6 @@ export default function App () {
       )}
 
     </div>
+    {toast && <div className="toast">{toast}</div>}
   );
 }
