@@ -99,6 +99,7 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button onClick={() => { window.location.href = 'howto.html' }}>使い方</button>
       </div>
 
       <textarea
