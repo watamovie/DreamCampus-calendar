@@ -8,8 +8,8 @@ iOS ショートカットで抽出した **イベント JSON** から
 |------|------|
 | クリップボード読込 | `navigator.clipboard.readText()` 対応。テキストボックスへの貼り付けも可 |
 | 欠落補完 UI | 時刻・分類・場所が空欄ならセルを赤枠表示。全部埋めないと生成ボタン非活性 |
-| 自動分類 | `DESCRIPTION` 内のキーワードから **対面 / zoom / オンデバ** を推定 |
-| LOCATION 抽出 | `/ ○○室 /` パターンを正規表現で抜き出し |
+| 自動分類 | `DESCRIPTION` 内のキーワードから **対面 / zoom / オンデマ** を推定し、DESCRIPTION を編集すると自動で再判定 |
+| LOCATION 抽出 | `/ ○○室 /` パターンを正規表現で抜き出し、DESCRIPTION 変更時にも反映 |
 | DESCRIPTION 保持 | 改行をそのままエスケープして ICS の `DESCRIPTION` に反映 |
 | 完全 Frontend | **ics-js** を用いてクライアント側で .ics テキストを生成 → Blob → ダウンロード |
 
