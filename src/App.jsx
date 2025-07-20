@@ -210,35 +210,35 @@ export default function App () {
               return (
               <tr key={r.id} className={isNewDay ? 'new-day' : ''}>
                 {/* date */}
-                <td>
+                <td data-label="日付">
                   <input type="date" value={r.date}
                     className={invalidDate ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'date', e.target.value)} />
                 </td>
 
                 {/* start */}
-                <td>
+                <td data-label="開始">
                   <input type="time" value={r.start}
                     className={invalidStart ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'start', e.target.value)} />
                 </td>
 
                 {/* end */}
-                <td>
+                <td data-label="終了">
                   <input type="time" value={r.end}
                     className={invalidEnd ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'end', e.target.value)} />
                 </td>
 
                 {/* summary */}
-                <td>
+                <td data-label="科目">
                   <input value={r.summary}
                     className={invalidSummary ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'summary', e.target.value)} />
                 </td>
 
                 {/* tag */}
-                <td>
+                <td data-label="分類">
                   <select value={r.tag}
                     className={warnTag ? 'warning' : ''}
                     onChange={e => updateRow(r.id, 'tag', e.target.value)}>
@@ -251,20 +251,19 @@ export default function App () {
                 </td>
 
                 {/* location */}
-                <td>
+                <td data-label="場所">
                   <input value={r.location}
                     className={warnLoc ? 'warning' : ''}
                     onChange={e => updateRow(r.id, 'location', e.target.value)} />
                 </td>
 
                 {/* description */}
-                <td>
+                <td data-label="DESCRIPTION">
                   <textarea rows={2} value={r.description}
                     className={warnDesc ? 'warning' : ''}
                     onChange={e => updateRow(r.id, 'description', e.target.value)} />
                 </td>
-
-                <td>
+                <td data-label="操作">
                   <button onClick={() => deleteRow(r.id)}>削除</button>
                 </td>
               </tr>
