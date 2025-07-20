@@ -25,15 +25,15 @@ export default function App () {
 
   // 初回マウント時にローカル保存を復元し履歴を初期化
   useEffect(() => {
-    const saved = localStorage.getItem('savedRows');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('savedRows');
+      if (saved) {
         const parsed = JSON.parse(saved);
         setRows(parsed);
         rowsRef.current = parsed;
-      } catch (e) {
-        console.error('failed to load saved data', e);
       }
+    } catch (e) {
+      console.error('failed to load saved data', e);
     }
     window.history.replaceState({ rows: rowsRef.current, index: 0 }, '');
     histRef.current = 0;
@@ -97,6 +97,37 @@ export default function App () {
     setMaxHistory(idx);
   }
 
+  // キーボードショートカット対応
+  useEffect(() => {
+    const handler = (e) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod) {
+        const key = e.key.toLowerCase();
+        if (key === 'n') {
+          e.preventDefault();
+          addRow();
+        } else if (key === 'z' && e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else if (key === 'z') {
+          e.preventDefault();
+          undo();
+        } else if (key === 'y') {
+          e.preventDefault();
+          redo();
+        } else if (key === 's') {
+          e.preventDefault();
+          if (isValid) handleGenerate();
+        }
+      } else if (e.key === 'Escape' && editingId !== null) {
+        e.preventDefault();
+        cancelEdit();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isValid, editingId, historyIndex, maxHistory]);
+
   function addRow () {
     const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
     const newRow = { ...BLANK_EVENT, id };
@@ -155,6 +186,8 @@ export default function App () {
       const text = await navigator.clipboard.readText();
       setRawInput(text);
       parseJson(text);
+      setToast('クリップボードから読み取りました');
+      setTimeout(() => setToast(''), 3000);
     } catch (err) {
       alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
     }
@@ -226,7 +259,11 @@ export default function App () {
     setErrors(errs);
     setWarnings(warns);
     rowsRef.current = rows;
-    localStorage.setItem('savedRows', JSON.stringify(rows));
+    try {
+      localStorage.setItem('savedRows', JSON.stringify(rows));
+    } catch (e) {
+      console.error('failed to save data', e);
+    }
   }, [rows]);
 
   const isValid = errors.length === 0 && rows.length > 0;
@@ -235,15 +272,20 @@ export default function App () {
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {
-    const cur = sortRows(rowsRef.current);
-    rowsRef.current = cur;
-    const icsText = buildICS(cur);
-    const first = cur[0].date;
-    const last  = cur.at(-1).date;
-    const filename = `schedule_${first}_to_${last}.ics`;
-    downloadICS(icsText, filename);
-    setToast('ICSファイルをダウンロードしました');
-    setTimeout(() => setToast(''), 3000);
+    try {
+      const cur = sortRows(rowsRef.current);
+      rowsRef.current = cur;
+      const icsText = buildICS(cur);
+      const first = cur[0].date;
+      const last  = cur.at(-1).date;
+      const filename = `schedule_${first}_to_${last}.ics`;
+      downloadICS(icsText, filename);
+      setToast('ICSファイルをダウンロードしました');
+      setTimeout(() => setToast(''), 3000);
+    } catch (e) {
+      console.error('failed to generate ICS', e);
+      alert('ICS生成中にエラーが発生しました');
+    }
   }
 
   function renderRow(r, idx = 0, arr = []) {
