@@ -362,19 +362,25 @@ export default function App () {
       <h1>DreamCampus Calendar Maker</h1>
 
       {editingId === null && (
-        <>
-        <div className="button-row action-group">
-          <button onClick={handleReadClipboard}>ペースト</button>
-          <button onClick={addRow}>追加</button>
-          <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
-        </div>
-        <div className="button-row edit-group">
-          <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
-          <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
-          <button onClick={clearAll}>クリア</button>
-          <a href="./howto.html" className="button-link">使い方</a>
-        </div>
-        </>
+        rows.length === 0 ? (
+          <div className="button-row action-group">
+            <button onClick={handleReadClipboard}>ペースト</button>
+            <a href="./howto.html" className="button-link">使い方</a>
+          </div>
+        ) : (
+          <>
+            <div className="button-row action-group">
+              <button onClick={addRow}>追加</button>
+              <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+            </div>
+            <div className="button-row edit-group">
+              <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
+              <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
+              <button onClick={clearAll}>クリア</button>
+              <a href="./howto.html" className="button-link">使い方</a>
+            </div>
+          </>
+        )
       )}
 
       <textarea
@@ -449,6 +455,7 @@ export default function App () {
                 <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
                 <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
                 <button onClick={clearAll}>クリア</button>
+                <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
               </div>
             </>
           ) : (
@@ -462,12 +469,13 @@ export default function App () {
             </div>
           )}
         </div>
-        {editingId === null && (
+        {rows.length > 0 && editingId === null && (
           <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
             <button onClick={addRow}>追加</button>
             <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
             <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
             <button onClick={clearAll}>クリア</button>
+            <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
           </div>
         )}
         </>
