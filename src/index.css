@@ -131,6 +131,10 @@ input::placeholder {
     background: var(--card);
     color: var(--text);
   }
+
+  tr.new-day td {
+    border-top-width: 3px;
+  }
   th {
     background: var(--card);
     position: sticky;
