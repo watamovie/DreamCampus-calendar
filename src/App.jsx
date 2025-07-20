@@ -93,11 +93,11 @@ export default function App () {
 
   /* 2-7. 描画 */
   return (
-    <div>
+    <div className="container">
       <h1>DreamCampus Calendar Maker</h1>
 
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <button onClick={handleReadClipboard}>クリップ読み込み</button>
+      <div className="button-row">
+        <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
       </div>
 
