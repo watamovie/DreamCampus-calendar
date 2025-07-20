@@ -68,6 +68,7 @@ input::placeholder {
   background: var(--card);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 h1 {
   margin: 0 0 1rem;
@@ -277,6 +278,10 @@ h1 {
     flex: 1 0 48%;
   }
   .button-row.action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .button-row.edit-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
