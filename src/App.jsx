@@ -110,6 +110,17 @@ export default function App () {
         onInput={e => { const txt = e.target.value; setRawInput(txt); parseJson(txt, false); }}
       />
 
+      {/* エラー一覧 */}
+      {errors.length > 0 && (
+        <ul className="error-list">
+          {errors.map(er => (
+            <li key={er.id}>
+              行 {rows.findIndex(r => r.id === er.id) + 1}: {er.list.join(' / ')}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/* 編集テーブル */}
       {rows.length > 0 && (
         <table>
@@ -120,23 +131,32 @@ export default function App () {
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => (
+            {rows.map(r => {
+              const invalidDate = !r.date;
+              const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
+              const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
+              const invalidTag = !r.tag;
+              const invalidLoc = r.tag === '対面' && !r.location;
+              return (
               <tr key={r.id}>
                 {/* date */}
                 <td>
                   <input type="date" value={r.date}
+                    className={invalidDate ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'date', e.target.value)} />
                 </td>
 
                 {/* start */}
                 <td>
                   <input type="time" value={r.start}
+                    className={invalidStart ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'start', e.target.value)} />
                 </td>
 
                 {/* end */}
                 <td>
                   <input type="time" value={r.end}
+                    className={invalidEnd ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'end', e.target.value)} />
                 </td>
 
@@ -149,6 +169,7 @@ export default function App () {
                 {/* tag */}
                 <td>
                   <select value={r.tag}
+                    className={invalidTag ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'tag', e.target.value)}>
                     <option value="">選択</option>
                     <option value="対面">対面</option>
@@ -161,6 +182,7 @@ export default function App () {
                 {/* location */}
                 <td>
                   <input value={r.location}
+                    className={invalidLoc ? 'invalid' : ''}
                     onChange={e => updateRow(r.id, 'location', e.target.value)} />
                 </td>
 
@@ -170,21 +192,12 @@ export default function App () {
                     onChange={e => updateRow(r.id, 'description', e.target.value)} />
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
 
-      {/* エラー一覧 */}
-      {errors.length > 0 && (
-        <ul style={{ color: 'red' }}>
-          {errors.map(er => (
-            <li key={er.id}>
-              行 {rows.findIndex(r => r.id === er.id) + 1}: {er.list.join(' / ')}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
