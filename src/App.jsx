@@ -148,15 +148,17 @@ export default function App () {
   }
 
   /* 2-2. クリップボード読み取りボタン */
-  async function handleReadClipboard () {
+  async function handleReadClipboard (silent = false) {
     try {
       const text = await navigator.clipboard.readText();
       setRawInput(text);
       parseJson(text);
     } catch (err) {
-      alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
-      setToast('クリップボード読込に失敗しました');
-      setTimeout(() => setToast(''), 3000);
+      if (!silent) {
+        alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
+        setToast('クリップボード読込に失敗しました');
+        setTimeout(() => setToast(''), 3000);
+      }
     }
   }
 
@@ -262,7 +264,10 @@ export default function App () {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isValid, editingId]);
 
-  // 自動読込機能は廃止
+  // ページ読み込み時にクリップボードを自動読込
+  useEffect(() => {
+    handleReadClipboard(true);
+  }, []);
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {
