@@ -118,6 +118,15 @@ input::placeholder {
   margin-top: 0.5rem;
 }
 
+
+.mobile-cards {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
   /* テーブル */
   table {
     width: 100%;
@@ -141,12 +150,71 @@ input::placeholder {
     top: 0;
   }
   
-  /* スマホでは列を潰しすぎないよう水平スクロール */
+  /* スマホ向けタイル表示 */
   @media (max-width: 640px) {
-    table {
+    .desktop-table,
+    .desktop-only {
+      display: none;
+    }
+    .mobile-cards {
       display: block;
-      overflow-x: auto;
-      white-space: nowrap;
+      margin-top: 1rem;
+    }
+    .card-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .day-header {
+      font-weight: bold;
+      margin: 0.5rem 0 0.25rem;
+    }
+    .day-group {
+      width: 100%;
+    }
+    .card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      padding: 0.75rem;
+      text-align: left;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .card-title {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .card-sub {
+      font-size: 0.875rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .mobile-edit thead {
+      display: none;
+    }
+    .mobile-edit tr {
+      display: block;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+    .mobile-edit td {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 0.3rem 0.4rem;
+    }
+    .mobile-edit td:last-child {
+      border-bottom: none;
+    }
+    .mobile-edit td::before {
+      content: attr(data-label);
+      flex-basis: 4.5rem;
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      opacity: 0.7;
     }
   }
 
