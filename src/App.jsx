@@ -130,17 +130,6 @@ export default function App () {
     setEditingId(null);
   }
 
-  function undo() {
-    if (historyIndex > 0) {
-      window.history.back();
-    }
-  }
-
-  function redo() {
-    if (historyIndex < maxHistory) {
-      window.history.forward();
-    }
-  }
 
   function clearAll () {
     if (!confirm('全てのデータを削除しますか？')) return;
@@ -258,9 +247,6 @@ export default function App () {
       } else if (mod && e.key === 'n') {
         e.preventDefault();
         addRow();
-      } else if (mod && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) redo(); else undo();
       } else if (mod && e.key.toLowerCase() === 'd' && e.shiftKey) {
         e.preventDefault();
         clearAll();
@@ -274,7 +260,7 @@ export default function App () {
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isValid, editingId, historyIndex, maxHistory]);
+  }, [isValid, editingId]);
 
   // 自動読込機能は廃止
 
@@ -361,17 +347,23 @@ export default function App () {
     <div className="container">
       <h1>DreamCampus Calendar Maker</h1>
 
-      <div className="button-row action-group">
-        <button onClick={handleReadClipboard}>ペースト</button>
-        <button onClick={addRow}>追加</button>
-        <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
-      </div>
-      <div className="button-row edit-group">
-        <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
-        <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
-        <button onClick={clearAll}>クリア</button>
-        <a href="./howto.html" className="button-link">使い方</a>
-      </div>
+      {editingId === null && (
+        rows.length === 0 ? (
+          <div className="button-row action-group">
+            <button onClick={handleReadClipboard}>ペースト</button>
+            <a href="./howto.html" className="button-link">使い方</a>
+          </div>
+        ) : (
+          <>
+            <div className="button-row action-group">
+              <a href="./howto.html" className="button-link">使い方</a>
+            </div>
+            <div className="button-row" style={{marginTop: '0.5rem'}}>
+              <button className="primary" disabled={!isValid} onClick={handleGenerate}>カレンダーに追加</button>
+            </div>
+          </>
+        )
+      )}
 
       <textarea
         autoFocus
@@ -380,6 +372,12 @@ export default function App () {
         value={rawInput}
         onInput={e => { const txt = e.target.value; setRawInput(txt); parseJson(txt, false); }}
       />
+
+      {rows.length > 0 && editingId === null && (
+        <div className="button-row" style={{marginTop: '0.5rem'}}>
+          <button onClick={clearAll}>クリア</button>
+        </div>
+      )}
 
       {/* エラー一覧 */}
       {errors.length > 0 && (
@@ -442,9 +440,6 @@ export default function App () {
               ))}
               <div className="button-row" style={{marginTop: '0.5rem'}}>
                 <button onClick={addRow}>追加</button>
-                <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
-                <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
-                <button onClick={clearAll}>クリア</button>
               </div>
             </>
           ) : (
@@ -458,12 +453,11 @@ export default function App () {
             </div>
           )}
         </div>
-        <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
-          <button onClick={addRow}>追加</button>
-          <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
-          <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
-          <button onClick={clearAll}>クリア</button>
-        </div>
+        {rows.length > 0 && editingId === null && (
+          <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
+            <button onClick={addRow}>追加</button>
+          </div>
+        )}
         </>
       )}
 
