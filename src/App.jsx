@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { buildICS, downloadICS } from './utils/icsHelpers.js';
+import { buildICS, downloadICS, shareICS } from './utils/icsHelpers.js';
 import { classifyTag, extractLocation } from './utils/parsers.js';
 
 /* 1) 型定義的な初期値 -------------- */
@@ -127,6 +127,16 @@ export default function App () {
     downloadICS(icsText, filename);
   }
 
+  /* 2-6b. ICS 共有 */
+  function handleShare () {
+    const cur = rowsRef.current;
+    const icsText = buildICS(cur);
+    const first = cur[0].date;
+    const last  = cur.at(-1).date;
+    const filename = `schedule_${first}_to_${last}.ics`;
+    shareICS(icsText, filename);
+  }
+
   /* 2-7. 描画 */
   return (
     <div className="container">
@@ -135,6 +145,7 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button disabled={!isValid} onClick={handleShare}>共有</button>
         <button onClick={addRow}>行追加</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>

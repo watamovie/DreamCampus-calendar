@@ -54,3 +54,18 @@ export function downloadICS(text, filename) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+/* -------- iOS 向け共有 util -------- */
+export async function shareICS(text, filename) {
+  const file = new File([text], filename, { type: "text/calendar" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  // 共有できなければ通常ダウンロードへフォールバック
+  downloadICS(text, filename);
+}
