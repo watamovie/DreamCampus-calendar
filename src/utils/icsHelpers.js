@@ -6,7 +6,6 @@ export function buildICS(rows) {
   // createEvents は [VEVENT, …] 配列を受け取る
   const events = rows.map(r => {
     if (!r.summary.trim())      throw new Error("行「" + r.date + "」: 科目が空です");
-    if (!r.description.trim())  throw new Error("行「" + r.date + "」: DESCRIPTION が空です");
 
     const [y,m,d] = r.date.split("-").map(Number);
     const [sh,sm] = r.start.split(":").map(Number);
