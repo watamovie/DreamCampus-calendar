@@ -30,16 +30,21 @@ export function buildICS(rows) {
     };
   });
 
-  const { error, value } = createEvents(events);
-  if (error) {
-    console.table(error.errors);                        // コンソールで一覧
-    const msg = error.errors
-      .map(e => `${e.path || 'unknown'}: «${e.value}» (${e.type})`)
-      .join('\n');
-    alert(`ICS 生成でエラーが発生しました:\n${msg}`);
-    throw error;
+  try {
+    const { error, value } = createEvents(events);
+    if (error) {
+      console.table(error.errors);                        // コンソールで一覧
+      const msg = error.errors
+        .map(e => `${e.path || 'unknown'}: «${e.value}» (${e.type})`)
+        .join('\n');
+      alert(`ICS 生成でエラーが発生しました:\n${msg}`);
+      throw error;
+    }
+    return value;                    // ← 完成した .ics テキスト
+  } catch (e) {
+    console.error('unexpected error from createEvents', e);
+    throw e;
   }
-  return value;                    // ← 完成した .ics テキスト
 }
 
 /* -------- ダウンロード util -------- */
