@@ -1,5 +1,7 @@
 # DreamCampus to Calendar
 
+このアプリは [https://dreamcampus-calendar.pages.dev](https://dreamcampus-calendar.pages.dev) でホストされています。
+
 iOS ショートカット経由で受け取った **イベント JSON** から
 ブラウザだけで一括 **.ics** ファイルを生成する React + Vite 製アプリです。
 受け渡しに失敗したり内容を調整したい場合は、Web UI 上で貼り付け・編集してから出力できます。
