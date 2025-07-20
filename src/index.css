@@ -5,10 +5,10 @@
     --border-light: #ccc;
     --text-light: #111;
   
-    --bg-dark: #121212;
-    --card-dark: #1a1a1a;
-    --border-dark: #333;
-    --text-dark: #eee;
+    --bg-dark: #181818;
+    --card-dark: #222;
+    --border-dark: #555;
+    --text-dark: #f1f1f1;
   }
   
   @media (prefers-color-scheme: dark) {
@@ -28,15 +28,31 @@
     }
   }
   
-  body,
-  textarea,
-  input,
-  select,
-  button {
+body,
+textarea,
+input,
+select,
+button,
+th,
+td,
+a {
     font-family: system-ui, sans-serif;
     font-size: 16px;
     color: var(--text);
-  }
+}
+
+textarea,
+input,
+select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: color-mix(in srgb, var(--text) 70%, transparent);
+}
   
   .dc-bg {
     background: var(--bg);
@@ -55,8 +71,8 @@
   flex-wrap: wrap;
 }
 
-.button-row button,
-.button-row a.button-link {
+
+.button-row button {
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--card);
@@ -66,15 +82,33 @@
   text-decoration: none;
   display: inline-block;
 }
+.button-row a.button-link {
+  padding: 0.5rem;
+  text-decoration: underline;
+  color: var(--text);
+  background: transparent;
+  border: none;
+}
 .button-row button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.button-row button:not(:disabled):hover,
-.button-row a.button-link:hover {
+.button-row button:not(:disabled):hover {
   background: rgba(0 0 0 / 0.04);
 }
-  
+.button-row a.button-link:hover {
+  opacity: 0.8;
+}
+
+.invalid {
+  border: 2px solid #f66 !important;
+}
+
+.error-list {
+  color: #f66;
+  margin-top: 0.5rem;
+}
+
   /* テーブル */
   table {
     width: 100%;
@@ -85,6 +119,8 @@
   td {
     border: 1px solid var(--border);
     padding: 0.4rem;
+    background: var(--card);
+    color: var(--text);
   }
   th {
     background: var(--card);
