@@ -22,6 +22,7 @@ export default function App () {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [maxHistory, setMaxHistory] = useState(0);
   const histRef = useRef(0);
+  const [autoDownloadPending, setAutoDownloadPending] = useState(false);
 
   // 初回マウント時にローカル保存を復元し履歴を初期化
   useEffect(() => {
@@ -140,6 +141,7 @@ export default function App () {
     setRawInput('');
     setErrors([]);
     setWarnings([]);
+    setAutoDownloadPending(false);
     try {
       localStorage.removeItem('savedRows');
     } catch (e) {
@@ -148,15 +150,18 @@ export default function App () {
   }
 
   /* 2-2. クリップボード読み取りボタン */
-  async function handleReadClipboard () {
+  async function handleReadClipboard (silent = false) {
+    setAutoDownloadPending(false);
     try {
       const text = await navigator.clipboard.readText();
       setRawInput(text);
       parseJson(text);
     } catch (err) {
-      alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
-      setToast('クリップボード読込に失敗しました');
-      setTimeout(() => setToast(''), 3000);
+      if (!silent) {
+        alert('クリップボード読み取りに失敗しました。\n手動貼り付けしてください。');
+        setToast('クリップボード読込に失敗しました');
+        setTimeout(() => setToast(''), 3000);
+      }
     }
   }
 
@@ -236,6 +241,15 @@ export default function App () {
   }, [rows]);
 
   const isValid = errors.length === 0 && rows.length > 0;
+  const isComplete = errors.length === 0 && warnings.length === 0 && rows.length > 0;
+
+  // クエリ取得時に欠損が無ければ自動で ICS を生成
+  useEffect(() => {
+    if (autoDownloadPending && isComplete) {
+      handleGenerate();
+      setAutoDownloadPending(false);
+    }
+  }, [autoDownloadPending, isComplete]);
 
   // ショートカットキー
   useEffect(() => {
@@ -262,7 +276,26 @@ export default function App () {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isValid, editingId]);
 
-  // 自動読込機能は廃止
+  // ページ読み込み時に URL パラメータまたはクリップボードから読込
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('data');
+    if (encoded) {
+      try {
+        // "+" が空白に変換されるケースに対応
+        const fixed = encoded.replace(/\s/g, '+');
+        const bytes = Uint8Array.from(atob(fixed), c => c.charCodeAt(0));
+        const text = new TextDecoder().decode(bytes);
+        setRawInput(text);
+        parseJson(text);
+        setAutoDownloadPending(true);
+        return;
+      } catch (e) {
+        console.error('failed to parse data parameter', e);
+      }
+    }
+    handleReadClipboard(true);
+  }, []);
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {

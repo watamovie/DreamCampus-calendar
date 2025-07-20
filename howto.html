@@ -10,8 +10,9 @@
   <body class="dc-bg" style="padding:1rem;">
     <h1>使い方</h1>
     <ol>
-      <li>iOSショートカットを実行して、イベントJSONをクリップボードへコピーします。</li>
-      <li>トップページでペーストボタンを押すかテキストボックスに貼り付けます。</li>
+      <li>iOSショートカットを実行すると、UTF-8 Base64 化した JSON を URL エンコードして本アプリが開きます。<br>
+        例: <code>encodeURIComponent(btoa(unescape(encodeURIComponent(json))))</code></li>
+      <li>URL から読めない場合はクリップボード読込が試行されます。失敗したらペーストボタンを押すかテキストボックスに貼り付けます。</li>
       <li>欠落している項目を編集して<strong>ICS生成</strong>ボタンを押します。</li>
       <li>編集内容は自動でブラウザに保存され、次回アクセス時に復元されます。</li>
     </ol>
