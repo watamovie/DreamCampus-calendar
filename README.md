@@ -1,4 +1,4 @@
-# DreamCampus-calendar
+# DreamCampus to Calendar
 
 iOS ショートカットで抽出した **イベント JSON** から
 ブラウザだけで一括 **.ics** ファイルを生成する React + Vite 製アプリです。

@@ -23,8 +23,8 @@ export function buildICS(rows) {
       categories : tag ? [tag] : undefined,
       start      : [y,m,d,sh,sm],
       end        : [y,m,d,eh,em],
-      uid        : `${r.id}@dreamcampus`,
-      productId  : "-//DreamCampus//Calendar//JP",
+      uid        : `${r.id}@dreamcampus-to-calendar`,
+      productId  : "-//DreamCampus to Calendar//JP",
       created     : ts,              // ✅ 配列形式
       lastModified: ts               // ✅ 正しいキー名
     };
