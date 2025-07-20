@@ -19,6 +19,20 @@ export default function App () {
   const [warnings, setWarnings] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
+  // 初回マウント時にローカル保存を復元
+  useEffect(() => {
+    const saved = localStorage.getItem('savedRows');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setRows(parsed);
+        rowsRef.current = parsed;
+      } catch (e) {
+        console.error('failed to load saved data', e);
+      }
+    }
+  }, []);
+
   function sortRows (arr) {
     return [...arr].sort((a, b) => {
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
@@ -83,6 +97,16 @@ export default function App () {
 
   function cancelEdit() {
     setEditingId(null);
+  }
+
+  function clearAll () {
+    if (!confirm('全てのデータを削除しますか？')) return;
+    setRows([]);
+    rowsRef.current = [];
+    setRawInput('');
+    setErrors([]);
+    setWarnings([]);
+    localStorage.removeItem('savedRows');
   }
 
   /* 2-2. クリップボード読み取りボタン */
@@ -162,6 +186,7 @@ export default function App () {
     setErrors(errs);
     setWarnings(warns);
     rowsRef.current = rows;
+    localStorage.setItem('savedRows', JSON.stringify(rows));
   }, [rows]);
 
   const isValid = errors.length === 0 && rows.length > 0;
@@ -246,6 +271,7 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button onClick={clearAll}>クリア</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>
 
@@ -318,6 +344,7 @@ export default function App () {
               ))}
               <div className="button-row" style={{marginTop: '0.5rem'}}>
                 <button onClick={addRow}>追加</button>
+                <button onClick={clearAll}>クリア</button>
               </div>
             </>
           ) : (
@@ -333,6 +360,7 @@ export default function App () {
         </div>
         <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
           <button onClick={addRow}>追加</button>
+          <button onClick={clearAll}>クリア</button>
         </div>
         </>
       )}
