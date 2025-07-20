@@ -89,7 +89,7 @@ export default function App () {
     else if (!/^\d{2}:\d{2}$/.test(r.end)) errors.push('終了時刻形式不正');
     if (!r.summary.trim()) errors.push('科目名未入力');
     if (!r.tag) warns.push('分類タグ未入力');
-    if (!r.description.trim()) warns.push('DESCRIPTION 未入力');
+    if (!r.description.trim()) warns.push('説明未入力');
     if (r.tag === '対面' && !r.location) warns.push('対面なのに場所が空');
     return { errors, warns };
   }
@@ -329,7 +329,7 @@ export default function App () {
             className={warnLoc ? 'warning' : ''}
             onChange={e => updateRow(r.id, 'location', e.target.value)} />
         </td>
-        <td data-label="DESCRIPTION">
+        <td data-label="説明">
           <textarea rows={2} value={r.description}
             className={warnDesc ? 'warning' : ''}
             onChange={e => updateRow(r.id, 'description', e.target.value)} />
@@ -345,7 +345,7 @@ export default function App () {
   return (
     <>
     <div className="container">
-      <h1>DreamCampus Calendar Maker</h1>
+      <h1>DreamCampus to Calendar</h1>
 
       {editingId === null && (
         rows.length === 0 ? (
@@ -408,7 +408,7 @@ export default function App () {
           <thead>
             <tr>
               <th>日付</th><th>開始</th><th>終了</th><th>科目</th>
-              <th>分類</th><th>場所</th><th>DESCRIPTION</th><th></th>
+              <th>分類</th><th>場所</th><th>説明</th><th></th>
             </tr>
           </thead>
           <tbody>
