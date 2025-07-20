@@ -15,6 +15,13 @@ export default function App () {
   const [rows, setRows]       = useState([]);
   const [rawInput, setRawInput] = useState('');
   const [errors, setErrors]   = useState([]);
+  const [warnings, setWarnings] = useState([]);
+
+  function addRow () {
+    const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
+    const newRow = { ...BLANK_EVENT, id };
+    setRows(prev => [...prev, newRow]);
+  }
 
   /* 2-2. クリップボード読み取りボタン */
   async function handleReadClipboard () {
@@ -50,32 +57,49 @@ export default function App () {
       });
       setRows(mapped);
       setErrors([]);
+      setWarnings([]);
     } catch (e) {
       if (showAlert) alert('JSON 解析に失敗しました');
       console.error(e);
-      if (!showAlert) setRows([]);
+      // 入力中の一時的な構文エラーではテーブルを消さない
+      if (!showAlert) return;
+      setRows([]);
     }
   }
 
   /* 2-4. 行編集ハンドラ */
   function updateRow (id, field, value) {
-    setRows(prev =>
-      prev.map(r => (r.id === id ? { ...r, [field]: value } : r))
-    );
+    setRows(prev => {
+      const next = prev.map(r => {
+        if (r.id !== id) return r;
+        const updated = { ...r, [field]: value };
+        if (field === 'description') {
+          updated.tag = classifyTag(value);
+          updated.location = extractLocation(value);
+        }
+        return updated;
+      });
+      return next;
+    });
   }
 
   /* 2-5. バリデーション */
   useEffect(() => {
-    const errs = rows.flatMap(r => {
-      const list = [];
-      if (!r.date) list.push('日付未入力');
-      if (!/^\d{2}:\d{2}$/.test(r.start)) list.push('開始時刻不正');
-      if (!/^\d{2}:\d{2}$/.test(r.end)) list.push('終了時刻不正');
-      if (!r.tag) list.push('分類タグ未入力');
-      if (r.tag === '対面' && !r.location) list.push('対面なのに場所が空');
-      return list.length ? { id: r.id, list } : [];
+    const errs = [];
+    const warns = [];
+    rows.forEach(r => {
+      const elist = [];
+      const wlist = [];
+      if (!r.date) elist.push('日付未入力');
+      if (!/^\d{2}:\d{2}$/.test(r.start)) elist.push('開始時刻不正');
+      if (!/^\d{2}:\d{2}$/.test(r.end)) elist.push('終了時刻不正');
+      if (!r.tag) elist.push('分類タグ未入力');
+      if (r.tag === '対面' && !r.location) wlist.push('対面なのに場所が空');
+      if (elist.length) errs.push({ id: r.id, list: elist });
+      if (wlist.length) warns.push({ id: r.id, list: wlist });
     });
     setErrors(errs);
+    setWarnings(warns);
   }, [rows]);
 
   const isValid = errors.length === 0 && rows.length > 0;
@@ -84,9 +108,10 @@ export default function App () {
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {
-    const icsText = buildICS(rows);
-    const first = rows[0].date;
-    const last  = rows.at(-1).date;
+    const cur = rows;
+    const icsText = buildICS(cur);
+    const first = cur[0].date;
+    const last  = cur.at(-1).date;
     const filename = `schedule_${first}_to_${last}.ics`;
     downloadICS(icsText, filename);
   }
@@ -99,6 +124,7 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button onClick={addRow}>行追加</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>
 
@@ -121,8 +147,20 @@ export default function App () {
         </ul>
       )}
 
+      {/* 警告一覧 */}
+      {warnings.length > 0 && (
+        <ul className="warning-list">
+          {warnings.map(wr => (
+            <li key={wr.id}>
+              行 {rows.findIndex(r => r.id === wr.id) + 1}: {wr.list.join(' / ')}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/* 編集テーブル */}
       {rows.length > 0 && (
+        <>
         <table>
           <thead>
             <tr>
@@ -136,7 +174,7 @@ export default function App () {
               const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
               const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
               const invalidTag = !r.tag;
-              const invalidLoc = r.tag === '対面' && !r.location;
+              const warnLoc = r.tag === '対面' && !r.location;
               return (
               <tr key={r.id}>
                 {/* date */}
@@ -182,7 +220,7 @@ export default function App () {
                 {/* location */}
                 <td>
                   <input value={r.location}
-                    className={invalidLoc ? 'invalid' : ''}
+                    className={warnLoc ? 'warning' : ''}
                     onChange={e => updateRow(r.id, 'location', e.target.value)} />
                 </td>
 
@@ -196,6 +234,10 @@ export default function App () {
             })}
           </tbody>
         </table>
+        <div className="button-row" style={{marginTop: '0.5rem'}}>
+          <button onClick={addRow}>行追加</button>
+        </div>
+        </>
       )}
 
     </div>
