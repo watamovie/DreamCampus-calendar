@@ -43,6 +43,17 @@
     margin: 0;
     padding: 1rem;
   }
+
+.container {
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
   
   button {
     cursor: pointer;
@@ -85,3 +96,12 @@
       white-space: nowrap;
     }
   }
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.25rem;
+  }
+  .button-row button {
+    flex: 1 0 auto;
+  }
+}
