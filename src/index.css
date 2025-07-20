@@ -159,6 +159,10 @@ input::placeholder {
     position: sticky;
     top: 0;
   }
+  /* stripe rows for readability */
+  .desktop-table tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--card) 90%, var(--bg) 10%);
+  }
   
   /* スマホ向けタイル表示 */
   @media (max-width: 640px) {
@@ -213,6 +217,10 @@ input::placeholder {
       display: block;
       margin-bottom: 1rem;
       border: 1px solid var(--border);
+      background: var(--card);
+    }
+    .mobile-edit tr:nth-child(even) {
+      background: color-mix(in srgb, var(--card) 90%, var(--bg) 10%);
     }
     .mobile-edit td {
       display: flex;
@@ -242,4 +250,18 @@ input::placeholder {
   .button-row a.button-link {
     flex: 1 0 auto;
   }
+}
+
+/* toast message */
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
