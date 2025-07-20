@@ -19,6 +19,8 @@ export default function App () {
   const [warnings, setWarnings] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [toast, setToast] = useState('');
+  const [history, setHistory] = useState([]);
+  const [future, setFuture] = useState([]);
 
   // 初回マウント時にローカル保存を復元
   useEffect(() => {
@@ -70,7 +72,13 @@ export default function App () {
     return { errors, warns };
   }
 
+  function pushHistory(data) {
+    setHistory(h => [...h, data]);
+    setFuture([]);
+  }
+
   function addRow () {
+    pushHistory(rowsRef.current);
     const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
     const newRow = { ...BLANK_EVENT, id };
     setRows(prev => {
@@ -82,6 +90,7 @@ export default function App () {
   }
 
   function deleteRow (id) {
+    pushHistory(rowsRef.current);
     setRows(prev => {
       const next = sortRows(prev.filter(r => r.id !== id));
       rowsRef.current = next;
@@ -100,8 +109,33 @@ export default function App () {
     setEditingId(null);
   }
 
+  function undo() {
+    if (history.length === 0) return;
+    const prevState = history[history.length - 1];
+    setHistory(history.slice(0, -1));
+    setFuture([rowsRef.current, ...future]);
+    setRows(prevState);
+    rowsRef.current = prevState;
+    if (editingId && !prevState.some(r => r.id === editingId)) {
+      setEditingId(null);
+    }
+  }
+
+  function redo() {
+    if (future.length === 0) return;
+    const [nextState, ...rest] = future;
+    setFuture(rest);
+    setHistory([...history, rowsRef.current]);
+    setRows(nextState);
+    rowsRef.current = nextState;
+    if (editingId && !nextState.some(r => r.id === editingId)) {
+      setEditingId(null);
+    }
+  }
+
   function clearAll () {
     if (!confirm('全てのデータを削除しますか？')) return;
+    pushHistory(rowsRef.current);
     setRows([]);
     rowsRef.current = [];
     setRawInput('');
@@ -143,6 +177,7 @@ export default function App () {
         };
       });
       const sorted = sortRows(mapped);
+      if (showAlert) pushHistory(rowsRef.current);
       setRows(sorted);
       rowsRef.current = sorted;
       setErrors([]);
@@ -159,6 +194,7 @@ export default function App () {
 
   /* 2-4. 行編集ハンドラ */
   function updateRow (id, field, value) {
+    pushHistory(rowsRef.current);
     setRows(prev => {
       const updatedRows = prev.map(r => {
         if (r.id !== id) return r;
@@ -275,6 +311,8 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button onClick={undo} disabled={history.length === 0}>戻す</button>
+        <button onClick={redo} disabled={future.length === 0}>進む</button>
         <button onClick={clearAll}>クリア</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>
@@ -348,6 +386,8 @@ export default function App () {
               ))}
               <div className="button-row" style={{marginTop: '0.5rem'}}>
                 <button onClick={addRow}>追加</button>
+                <button onClick={undo} disabled={history.length === 0}>戻す</button>
+                <button onClick={redo} disabled={future.length === 0}>進む</button>
                 <button onClick={clearAll}>クリア</button>
               </div>
             </>
@@ -364,6 +404,8 @@ export default function App () {
         </div>
         <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
           <button onClick={addRow}>追加</button>
+          <button onClick={undo} disabled={history.length === 0}>戻す</button>
+          <button onClick={redo} disabled={future.length === 0}>進む</button>
           <button onClick={clearAll}>クリア</button>
         </div>
         </>
