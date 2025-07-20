@@ -268,6 +268,7 @@ export default function App () {
 
   /* 2-7. 描画 */
   return (
+    <>
     <div className="container">
       <h1>DreamCampus Calendar Maker</h1>
 
@@ -370,5 +371,6 @@ export default function App () {
 
     </div>
     {toast && <div className="toast">{toast}</div>}
+    </>
   );
 }
