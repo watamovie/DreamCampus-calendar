@@ -18,11 +18,27 @@ export default function App () {
   const [errors, setErrors]   = useState([]);
   const [warnings, setWarnings] = useState([]);
 
+  function sortRows (arr) {
+    return [...arr].sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      if (a.start !== b.start) return a.start < b.start ? -1 : 1;
+      return 0;
+    });
+  }
+
   function addRow () {
     const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
     const newRow = { ...BLANK_EVENT, id };
     setRows(prev => {
-      const next = [...prev, newRow];
+      const next = sortRows([...prev, newRow]);
+      rowsRef.current = next;
+      return next;
+    });
+  }
+
+  function deleteRow (id) {
+    setRows(prev => {
+      const next = sortRows(prev.filter(r => r.id !== id));
       rowsRef.current = next;
       return next;
     });
@@ -60,8 +76,9 @@ export default function App () {
           location
         };
       });
-      setRows(mapped);
-      rowsRef.current = mapped;
+      const sorted = sortRows(mapped);
+      setRows(sorted);
+      rowsRef.current = sorted;
       setErrors([]);
       setWarnings([]);
     } catch (e) {
@@ -77,7 +94,7 @@ export default function App () {
   /* 2-4. 行編集ハンドラ */
   function updateRow (id, field, value) {
     setRows(prev => {
-      const next = prev.map(r => {
+      const updatedRows = prev.map(r => {
         if (r.id !== id) return r;
         const updated = { ...r, [field]: value };
         if (field === 'description') {
@@ -86,6 +103,7 @@ export default function App () {
         }
         return updated;
       });
+      const next = sortRows(updatedRows);
       rowsRef.current = next;
       return next;
     });
@@ -119,7 +137,8 @@ export default function App () {
 
   /* 2-6. ICS 生成 */
   function handleGenerate () {
-    const cur = rowsRef.current;
+    const cur = sortRows(rowsRef.current);
+    rowsRef.current = cur;
     const icsText = buildICS(cur);
     const first = cur[0].date;
     const last  = cur.at(-1).date;
@@ -135,7 +154,6 @@ export default function App () {
       <div className="button-row">
         <button onClick={handleReadClipboard}>ペースト</button>
         <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
-        <button onClick={addRow}>行追加</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>
 
@@ -176,11 +194,11 @@ export default function App () {
           <thead>
             <tr>
               <th>日付</th><th>開始</th><th>終了</th><th>科目</th>
-              <th>分類</th><th>場所</th><th>DESCRIPTION</th>
+              <th>分類</th><th>場所</th><th>DESCRIPTION</th><th></th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => {
+            {sortRows(rows).map((r, idx, arr) => {
               const invalidDate = !r.date;
               const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
               const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
@@ -188,8 +206,9 @@ export default function App () {
               const warnTag = !r.tag;
               const warnDesc = !r.description.trim();
               const warnLoc = r.tag === '対面' && !r.location;
+              const isNewDay = idx > 0 && r.date !== arr[idx-1].date;
               return (
-              <tr key={r.id}>
+              <tr key={r.id} className={isNewDay ? 'new-day' : ''}>
                 {/* date */}
                 <td>
                   <input type="date" value={r.date}
@@ -243,6 +262,10 @@ export default function App () {
                   <textarea rows={2} value={r.description}
                     className={warnDesc ? 'warning' : ''}
                     onChange={e => updateRow(r.id, 'description', e.target.value)} />
+                </td>
+
+                <td>
+                  <button onClick={() => deleteRow(r.id)}>削除</button>
                 </td>
               </tr>
               );
