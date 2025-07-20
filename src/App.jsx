@@ -19,10 +19,11 @@ export default function App () {
   const [warnings, setWarnings] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [toast, setToast] = useState('');
-  const [history, setHistory] = useState([]);
-  const [future, setFuture] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [maxHistory, setMaxHistory] = useState(0);
+  const histRef = useRef(0);
 
-  // 初回マウント時にローカル保存を復元
+  // 初回マウント時にローカル保存を復元し履歴を初期化
   useEffect(() => {
     const saved = localStorage.getItem('savedRows');
     if (saved) {
@@ -34,6 +35,22 @@ export default function App () {
         console.error('failed to load saved data', e);
       }
     }
+    window.history.replaceState({ rows: rowsRef.current, index: 0 }, '');
+    histRef.current = 0;
+    setHistoryIndex(0);
+    setMaxHistory(0);
+    const handler = (e) => {
+      const st = e.state;
+      if (st && Array.isArray(st.rows)) {
+        setRows(st.rows);
+        rowsRef.current = st.rows;
+        setHistoryIndex(st.index);
+        setMaxHistory((m) => Math.max(m, st.index));
+        setEditingId(null);
+      }
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
   }, []);
 
   function sortRows (arr) {
@@ -72,30 +89,29 @@ export default function App () {
     return { errors, warns };
   }
 
-  function pushHistory(data) {
-    setHistory(h => [...h, data]);
-    setFuture([]);
+  function pushHistory(newRows) {
+    histRef.current += 1;
+    const idx = histRef.current;
+    window.history.pushState({ rows: newRows, index: idx }, '');
+    setHistoryIndex(idx);
+    setMaxHistory(idx);
   }
 
   function addRow () {
-    pushHistory(rowsRef.current);
     const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
     const newRow = { ...BLANK_EVENT, id };
-    setRows(prev => {
-      const next = sortRows([...prev, newRow]);
-      rowsRef.current = next;
-      return next;
-    });
+    const next = sortRows([...rowsRef.current, newRow]);
+    setRows(next);
+    rowsRef.current = next;
+    pushHistory(next);
     setEditingId(id);
   }
 
   function deleteRow (id) {
-    pushHistory(rowsRef.current);
-    setRows(prev => {
-      const next = sortRows(prev.filter(r => r.id !== id));
-      rowsRef.current = next;
-      return next;
-    });
+    const next = sortRows(rowsRef.current.filter(r => r.id !== id));
+    setRows(next);
+    rowsRef.current = next;
+    pushHistory(next);
     if (editingId === id) {
       setEditingId(null);
     }
@@ -110,34 +126,23 @@ export default function App () {
   }
 
   function undo() {
-    if (history.length === 0) return;
-    const prevState = history[history.length - 1];
-    setHistory(history.slice(0, -1));
-    setFuture([rowsRef.current, ...future]);
-    setRows(prevState);
-    rowsRef.current = prevState;
-    if (editingId && !prevState.some(r => r.id === editingId)) {
-      setEditingId(null);
+    if (historyIndex > 0) {
+      window.history.back();
     }
   }
 
   function redo() {
-    if (future.length === 0) return;
-    const [nextState, ...rest] = future;
-    setFuture(rest);
-    setHistory([...history, rowsRef.current]);
-    setRows(nextState);
-    rowsRef.current = nextState;
-    if (editingId && !nextState.some(r => r.id === editingId)) {
-      setEditingId(null);
+    if (historyIndex < maxHistory) {
+      window.history.forward();
     }
   }
 
   function clearAll () {
     if (!confirm('全てのデータを削除しますか？')) return;
-    pushHistory(rowsRef.current);
-    setRows([]);
-    rowsRef.current = [];
+    const next = [];
+    setRows(next);
+    rowsRef.current = next;
+    pushHistory(next);
     setRawInput('');
     setErrors([]);
     setWarnings([]);
@@ -177,9 +182,9 @@ export default function App () {
         };
       });
       const sorted = sortRows(mapped);
-      if (showAlert) pushHistory(rowsRef.current);
       setRows(sorted);
       rowsRef.current = sorted;
+      if (showAlert) pushHistory(sorted);
       setErrors([]);
       setWarnings([]);
     } catch (e) {
@@ -194,21 +199,19 @@ export default function App () {
 
   /* 2-4. 行編集ハンドラ */
   function updateRow (id, field, value) {
-    pushHistory(rowsRef.current);
-    setRows(prev => {
-      const updatedRows = prev.map(r => {
-        if (r.id !== id) return r;
-        const updated = { ...r, [field]: value };
-        if (field === 'description') {
-          updated.tag = classifyTag(value);
-          updated.location = extractLocation(value);
-        }
-        return updated;
-      });
-      const next = sortRows(updatedRows);
-      rowsRef.current = next;
-      return next;
+    const updatedRows = rowsRef.current.map(r => {
+      if (r.id !== id) return r;
+      const updated = { ...r, [field]: value };
+      if (field === 'description') {
+        updated.tag = classifyTag(value);
+        updated.location = extractLocation(value);
+      }
+      return updated;
     });
+    const next = sortRows(updatedRows);
+    setRows(next);
+    rowsRef.current = next;
+    pushHistory(next);
   }
 
   /* 2-5. バリデーション */
@@ -314,8 +317,8 @@ export default function App () {
         <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
       </div>
       <div className="button-row edit-group">
-        <button onClick={undo} disabled={history.length === 0}>戻す</button>
-        <button onClick={redo} disabled={future.length === 0}>進む</button>
+        <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
+        <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
         <button onClick={clearAll}>クリア</button>
         <a href="./howto.html" className="button-link">使い方</a>
       </div>
@@ -389,8 +392,8 @@ export default function App () {
               ))}
               <div className="button-row" style={{marginTop: '0.5rem'}}>
                 <button onClick={addRow}>追加</button>
-                <button onClick={undo} disabled={history.length === 0}>戻す</button>
-                <button onClick={redo} disabled={future.length === 0}>進む</button>
+                <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
+                <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
                 <button onClick={clearAll}>クリア</button>
               </div>
             </>
@@ -407,8 +410,8 @@ export default function App () {
         </div>
         <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
           <button onClick={addRow}>追加</button>
-          <button onClick={undo} disabled={history.length === 0}>戻す</button>
-          <button onClick={redo} disabled={future.length === 0}>進む</button>
+          <button onClick={undo} disabled={historyIndex === 0}>戻す</button>
+          <button onClick={redo} disabled={historyIndex >= maxHistory}>進む</button>
           <button onClick={clearAll}>クリア</button>
         </div>
         </>
