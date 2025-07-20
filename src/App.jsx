@@ -308,9 +308,12 @@ export default function App () {
     <div className="container">
       <h1>DreamCampus Calendar Maker</h1>
 
-      <div className="button-row">
+      <div className="button-row action-group">
         <button onClick={handleReadClipboard}>ペースト</button>
-        <button disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+        <button onClick={addRow}>追加</button>
+        <button className="primary" disabled={!isValid} onClick={handleGenerate}>ICS 生成</button>
+      </div>
+      <div className="button-row edit-group">
         <button onClick={undo} disabled={history.length === 0}>戻す</button>
         <button onClick={redo} disabled={future.length === 0}>進む</button>
         <button onClick={clearAll}>クリア</button>
