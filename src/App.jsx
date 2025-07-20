@@ -30,9 +30,22 @@ export default function App () {
   /* 2-3. JSON 解析 */
   function parseJson (text, showAlert = true) {
     try {
+      let arr;
       // 先頭/末尾のゴミ除去
-      const cleaned = text.trim().replace(/^[^\[]*/, '').replace(/[^\]]*$/, '');
-      const arr = JSON.parse(cleaned);
+      const cleaned = text.trim();
+
+      try {
+        const slice = cleaned.replace(/^[^\[]*/, '').replace(/[^\]]*$/, '');
+        const parsed = JSON.parse(slice);
+        arr = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        // 改行区切りの JSON オブジェクト列に対応
+        arr = cleaned
+          .split(/\n+/)
+          .map(line => line.trim())
+          .filter(Boolean)
+          .map(line => JSON.parse(line));
+      }
 
       const mapped = arr.map(ev => {
         const tag = classifyTag(ev.description || '');

@@ -12,6 +12,7 @@ iOS ショートカットで抽出した **イベント JSON** から
 | LOCATION 抽出 | `/ ○○室 /` パターンを正規表現で抜き出し |
 | DESCRIPTION 保持 | 改行をそのままエスケープして ICS の `DESCRIPTION` に反映 |
 | 完全 Frontend | **ics-js** を用いてクライアント側で .ics テキストを生成 → Blob → ダウンロード |
+| NDJSON 対応 | 行ごとに JSON を並べた形式 (NDJSON) も解析可能 |
 
 ## 使い方
 1. iOS ショートカットを実行し、イベント JSON をクリップボードへコピー
@@ -23,3 +24,4 @@ iOS ショートカットで抽出した **イベント JSON** から
 npm i          # 依存解決
 npm run dev    # ローカルサーバ
 npm run build  # 本番ビルド (dist/)
+```
