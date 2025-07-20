@@ -17,6 +17,7 @@ export default function App () {
   const [rawInput, setRawInput] = useState('');
   const [errors, setErrors]   = useState([]);
   const [warnings, setWarnings] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   function sortRows (arr) {
     return [...arr].sort((a, b) => {
@@ -42,6 +43,14 @@ export default function App () {
       rowsRef.current = next;
       return next;
     });
+  }
+
+  function startEdit(id) {
+    setEditingId(id);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
   }
 
   /* 2-2. クリップボード読み取りボタン */
@@ -146,6 +155,65 @@ export default function App () {
     downloadICS(icsText, filename);
   }
 
+  function renderRow(r, idx = 0, arr = []) {
+    const invalidDate = !r.date;
+    const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
+    const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
+    const invalidSummary = !r.summary.trim();
+    const warnTag = !r.tag;
+    const warnDesc = !r.description.trim();
+    const warnLoc = r.tag === '対面' && !r.location;
+    const isNewDay = arr.length && idx > 0 && r.date !== arr[idx-1].date;
+    return (
+      <tr key={r.id} className={isNewDay ? 'new-day' : ''}>
+        <td data-label="日付">
+          <input type="date" value={r.date}
+            className={invalidDate ? 'invalid' : ''}
+            onChange={e => updateRow(r.id, 'date', e.target.value)} />
+        </td>
+        <td data-label="開始">
+          <input type="time" value={r.start}
+            className={invalidStart ? 'invalid' : ''}
+            onChange={e => updateRow(r.id, 'start', e.target.value)} />
+        </td>
+        <td data-label="終了">
+          <input type="time" value={r.end}
+            className={invalidEnd ? 'invalid' : ''}
+            onChange={e => updateRow(r.id, 'end', e.target.value)} />
+        </td>
+        <td data-label="科目">
+          <input value={r.summary}
+            className={invalidSummary ? 'invalid' : ''}
+            onChange={e => updateRow(r.id, 'summary', e.target.value)} />
+        </td>
+        <td data-label="分類">
+          <select value={r.tag}
+            className={warnTag ? 'warning' : ''}
+            onChange={e => updateRow(r.id, 'tag', e.target.value)}>
+            <option value="">選択</option>
+            <option value="対面">対面</option>
+            <option value="zoom">zoom</option>
+            <option value="オンデマ">オンデマ</option>
+            <option value="見学">見学</option>
+          </select>
+        </td>
+        <td data-label="場所">
+          <input value={r.location}
+            className={warnLoc ? 'warning' : ''}
+            onChange={e => updateRow(r.id, 'location', e.target.value)} />
+        </td>
+        <td data-label="DESCRIPTION">
+          <textarea rows={2} value={r.description}
+            className={warnDesc ? 'warning' : ''}
+            onChange={e => updateRow(r.id, 'description', e.target.value)} />
+        </td>
+        <td data-label="操作">
+          <button onClick={() => deleteRow(r.id)}>削除</button>
+        </td>
+      </tr>
+    );
+  }
+
   /* 2-7. 描画 */
   return (
     <div className="container">
@@ -190,7 +258,7 @@ export default function App () {
       {/* 編集テーブル */}
       {rows.length > 0 && (
         <>
-        <table>
+        <table className="desktop-table">
           <thead>
             <tr>
               <th>日付</th><th>開始</th><th>終了</th><th>科目</th>
@@ -198,81 +266,36 @@ export default function App () {
             </tr>
           </thead>
           <tbody>
-            {sortRows(rows).map((r, idx, arr) => {
-              const invalidDate = !r.date;
-              const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
-              const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
-              const invalidSummary = !r.summary.trim();
-              const warnTag = !r.tag;
-              const warnDesc = !r.description.trim();
-              const warnLoc = r.tag === '対面' && !r.location;
-              const isNewDay = idx > 0 && r.date !== arr[idx-1].date;
-              return (
-              <tr key={r.id} className={isNewDay ? 'new-day' : ''}>
-                {/* date */}
-                <td>
-                  <input type="date" value={r.date}
-                    className={invalidDate ? 'invalid' : ''}
-                    onChange={e => updateRow(r.id, 'date', e.target.value)} />
-                </td>
-
-                {/* start */}
-                <td>
-                  <input type="time" value={r.start}
-                    className={invalidStart ? 'invalid' : ''}
-                    onChange={e => updateRow(r.id, 'start', e.target.value)} />
-                </td>
-
-                {/* end */}
-                <td>
-                  <input type="time" value={r.end}
-                    className={invalidEnd ? 'invalid' : ''}
-                    onChange={e => updateRow(r.id, 'end', e.target.value)} />
-                </td>
-
-                {/* summary */}
-                <td>
-                  <input value={r.summary}
-                    className={invalidSummary ? 'invalid' : ''}
-                    onChange={e => updateRow(r.id, 'summary', e.target.value)} />
-                </td>
-
-                {/* tag */}
-                <td>
-                  <select value={r.tag}
-                    className={warnTag ? 'warning' : ''}
-                    onChange={e => updateRow(r.id, 'tag', e.target.value)}>
-                    <option value="">選択</option>
-                    <option value="対面">対面</option>
-                    <option value="zoom">zoom</option>
-                    <option value="オンデマ">オンデマ</option>
-                    <option value="見学">見学</option>
-                  </select>
-                </td>
-
-                {/* location */}
-                <td>
-                  <input value={r.location}
-                    className={warnLoc ? 'warning' : ''}
-                    onChange={e => updateRow(r.id, 'location', e.target.value)} />
-                </td>
-
-                {/* description */}
-                <td>
-                  <textarea rows={2} value={r.description}
-                    className={warnDesc ? 'warning' : ''}
-                    onChange={e => updateRow(r.id, 'description', e.target.value)} />
-                </td>
-
-                <td>
-                  <button onClick={() => deleteRow(r.id)}>削除</button>
-                </td>
-              </tr>
-              );
-            })}
+            {sortRows(rows).map((r, idx, arr) => renderRow(r, idx, arr))}
           </tbody>
         </table>
-        <div className="button-row" style={{marginTop: '0.5rem'}}>
+        <div className="mobile-cards">
+          {editingId === null ? (
+            <>
+              <div className="card-grid">
+                {rows.map(r => (
+                  <button key={r.id} className="card" onClick={() => startEdit(r.id)}>
+                    <div>{r.date} {r.start}-{r.end}</div>
+                    <div>{r.summary}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="button-row" style={{marginTop: '0.5rem'}}>
+                <button onClick={addRow}>行追加</button>
+              </div>
+            </>
+          ) : (
+            <div className="edit-screen">
+              <button onClick={cancelEdit} style={{marginBottom: '0.5rem'}}>戻る</button>
+              <table className="mobile-edit">
+                <tbody>
+                  {renderRow(rows.find(r => r.id === editingId) ?? BLANK_EVENT)}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
           <button onClick={addRow}>行追加</button>
         </div>
         </>
