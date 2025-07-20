@@ -118,6 +118,16 @@ input::placeholder {
   margin-top: 0.5rem;
 }
 
+.error-list button,
+.warning-list button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 
 .mobile-cards {
   display: none;
@@ -179,6 +189,12 @@ input::placeholder {
       text-align: left;
       border-radius: 4px;
       width: 100%;
+    }
+    .card.invalid {
+      border-color: #f66;
+    }
+    .card.warning {
+      border-color: #fc6;
     }
     .card-title {
       font-size: 1rem;

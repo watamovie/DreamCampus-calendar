@@ -40,6 +40,21 @@ export default function App () {
     return groups;
   }
 
+  function getIssues(r) {
+    const errors = [];
+    const warns = [];
+    if (!r.date) errors.push('日付未入力');
+    if (!r.start) errors.push('開始時刻未入力');
+    else if (!/^\d{2}:\d{2}$/.test(r.start)) errors.push('開始時刻形式不正');
+    if (!r.end) errors.push('終了時刻未入力');
+    else if (!/^\d{2}:\d{2}$/.test(r.end)) errors.push('終了時刻形式不正');
+    if (!r.summary.trim()) errors.push('科目名未入力');
+    if (!r.tag) warns.push('分類タグ未入力');
+    if (!r.description.trim()) warns.push('DESCRIPTION 未入力');
+    if (r.tag === '対面' && !r.location) warns.push('対面なのに場所が空');
+    return { errors, warns };
+  }
+
   function addRow () {
     const id = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
     const newRow = { ...BLANK_EVENT, id };
@@ -48,6 +63,7 @@ export default function App () {
       rowsRef.current = next;
       return next;
     });
+    setEditingId(id);
   }
 
   function deleteRow (id) {
@@ -56,6 +72,9 @@ export default function App () {
       rowsRef.current = next;
       return next;
     });
+    if (editingId === id) {
+      setEditingId(null);
+    }
   }
 
   function startEdit(id) {
@@ -136,15 +155,7 @@ export default function App () {
     const errs = [];
     const warns = [];
     rows.forEach(r => {
-      const elist = [];
-      const wlist = [];
-      if (!r.date) elist.push('日付未入力');
-      if (!/^\d{2}:\d{2}$/.test(r.start)) elist.push('開始時刻不正');
-      if (!/^\d{2}:\d{2}$/.test(r.end)) elist.push('終了時刻不正');
-      if (!r.summary.trim()) elist.push('科目名未入力');
-      if (!r.tag) wlist.push('分類タグ未入力');
-      if (!r.description.trim()) wlist.push('DESCRIPTION 未入力');
-      if (r.tag === '対面' && !r.location) wlist.push('対面なのに場所が空');
+      const { errors: elist, warns: wlist } = getIssues(r);
       if (elist.length) errs.push({ id: r.id, list: elist });
       if (wlist.length) warns.push({ id: r.id, list: wlist });
     });
@@ -251,7 +262,7 @@ export default function App () {
         <ul className="error-list">
           {errors.map(er => (
             <li key={er.id}>
-              行 {rows.findIndex(r => r.id === er.id) + 1}: {er.list.join(' / ')}
+              <button onClick={() => startEdit(er.id)}>{er.list.join(' / ')}</button>
             </li>
           ))}
         </ul>
@@ -262,7 +273,7 @@ export default function App () {
         <ul className="warning-list">
           {warnings.map(wr => (
             <li key={wr.id}>
-              行 {rows.findIndex(r => r.id === wr.id) + 1}: {wr.list.join(' / ')}
+              <button onClick={() => startEdit(wr.id)}>{wr.list.join(' / ')}</button>
             </li>
           ))}
         </ul>
@@ -289,20 +300,24 @@ export default function App () {
                 <div key={g.date} className="day-group">
                   <div className="day-header">{g.date}</div>
                   <div className="card-grid">
-                    {g.items.map(r => (
-                      <button key={r.id} className="card" onClick={() => startEdit(r.id)}>
-                        <div className="card-title">{r.tag ? `【${r.tag}】` : ''}{r.summary}</div>
-                        <div className="card-sub">
-                          {r.location && <span className="loc">{r.location}</span>}
-                          <span className="time">{r.start}-{r.end}</span>
-                        </div>
-                      </button>
-                    ))}
+                    {g.items.map(r => {
+                      const iss = getIssues(r);
+                      const cls = iss.errors.length ? 'invalid' : (iss.warns.length ? 'warning' : '');
+                      return (
+                        <button key={r.id} className={`card ${cls}`} onClick={() => startEdit(r.id)}>
+                          <div className="card-title">{r.tag ? `【${r.tag}】` : ''}{r.summary}</div>
+                          <div className="card-sub">
+                            {r.location && <span className="loc">{r.location}</span>}
+                            <span className="time">{r.start}-{r.end}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
               <div className="button-row" style={{marginTop: '0.5rem'}}>
-                <button onClick={addRow}>行追加</button>
+                <button onClick={addRow}>追加</button>
               </div>
             </>
           ) : (
@@ -317,7 +332,7 @@ export default function App () {
           )}
         </div>
         <div className="button-row desktop-only" style={{marginTop: '0.5rem'}}>
-          <button onClick={addRow}>行追加</button>
+          <button onClick={addRow}>追加</button>
         </div>
         </>
       )}
