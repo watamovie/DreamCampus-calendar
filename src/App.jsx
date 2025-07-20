@@ -189,15 +189,17 @@ export default function App () {
       if (showAlert) pushHistory(sorted);
       setErrors([]);
       setWarnings([]);
+      return true;
     } catch (e) {
       if (showAlert) alert('JSON 解析に失敗しました');
       console.error(e);
       // 入力中の一時的な構文エラーではテーブルを消さない
-      if (!showAlert) return;
+      if (!showAlert) return false;
       setRows([]);
       rowsRef.current = [];
       setToast('JSON 読み込みエラー');
       setTimeout(() => setToast(''), 3000);
+      return false;
     }
   }
 
@@ -275,8 +277,7 @@ export default function App () {
         const bytes = Uint8Array.from(atob(fixed), c => c.charCodeAt(0));
         const text = new TextDecoder().decode(bytes);
         setRawInput(text);
-        parseJson(text);
-        return;
+        if (parseJson(text)) return;
       } catch (e) {
         console.error('failed to parse data parameter', e);
       }
