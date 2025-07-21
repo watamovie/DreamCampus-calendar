@@ -22,11 +22,15 @@ export function buildICS(rows) {
       location   : r.location,
       categories : tag ? [tag] : undefined,
       start      : [y,m,d,sh,sm],
+      startInputType : 'local',
+      startOutputType: 'local',
       end        : [y,m,d,eh,em],
+      endInputType   : 'local',
+      endOutputType  : 'local',
       uid        : `${r.id}@dreamcampus-to-calendar`,
       productId  : "-//DreamCampus to Calendar//JP",
-      created     : ts,              // ✅ 配列形式
-      lastModified: ts               // ✅ 正しいキー名
+      created     : ts,
+      lastModified: ts
     };
   });
 
