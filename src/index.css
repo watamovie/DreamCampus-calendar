@@ -296,3 +296,141 @@ h1 {
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.modal {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-width: 640px;
+  width: min(640px, 100%);
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal-description {
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.modal-section {
+  margin-top: 1rem;
+}
+
+.modal-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.modal-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.modal-sort select {
+  margin-left: 0.25rem;
+}
+
+.modal-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.modal-checkbox-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.modal-subtext {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--text) 70%, transparent);
+}
+
+.modal-preview {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--card) 90%, var(--bg) 10%);
+}
+
+.modal-preview ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modal-preview li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.preview-date {
+  font-family: 'Menlo', 'Roboto Mono', ui-monospace, SFMono-Regular, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.preview-summary {
+  font-weight: 600;
+}
+
+.preview-tag {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.modal-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal-footnote {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--text) 65%, transparent);
+}
+
+@media (max-width: 520px) {
+  .modal {
+    padding: 1.25rem 1rem;
+  }
+  .modal-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .modal-actions button {
+    width: 100%;
+  }
+}
