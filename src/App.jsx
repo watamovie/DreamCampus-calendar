@@ -2,6 +2,66 @@ import React, { useState, useEffect, useRef } from 'react';
 import { buildICS, downloadICS } from './utils/icsHelpers.js';
 import { classifyTag, extractLocation } from './utils/parsers.js';
 
+const REMINDER_SHORTCUT_NAME = 'DreamCampus Reminders';
+
+function encodeBase64Utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function combinedText(row) {
+  return [row.summary, row.description, row.location, row.tag]
+    .filter(Boolean)
+    .join(' ');
+}
+
+const REMINDER_KEYWORD_PRESETS = [
+  {
+    key: '合格',
+    label: '「合格」を含む予定',
+    defaultSelected: false,
+    test: (row) => combinedText(row).includes('合格')
+  },
+  {
+    key: '実施済',
+    label: '「実施済」など完了済みを含む予定',
+    defaultSelected: false,
+    test: (row) => /実施済み?/.test(combinedText(row))
+  },
+  {
+    key: '完了',
+    label: '「完了」を含む予定',
+    defaultSelected: true,
+    test: (row) => combinedText(row).includes('完了')
+  },
+  {
+    key: '提出済',
+    label: '「提出済」など提出済みを含む予定',
+    defaultSelected: true,
+    test: (row) => /提出済/.test(combinedText(row))
+  }
+];
+
+function buildReminderPayload(rows) {
+  return {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    items: rows.map(row => ({
+      title: row.summary,
+      dueDate: row.date,
+      dueTime: row.start,
+      endTime: row.end,
+      notes: row.description,
+      location: row.location,
+      tag: row.tag
+    }))
+  };
+}
+
 /* 1) 型定義的な初期値 -------------- */
 const BLANK_EVENT = {
   id: '', date: '', start: '', end: '',
@@ -23,6 +83,9 @@ export default function App () {
   const [maxHistory, setMaxHistory] = useState(0);
   const histRef = useRef(0);
   const [autoDownloadPending, setAutoDownloadPending] = useState(false);
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [reminderFilter, setReminderFilter] = useState(null);
+  const [reminderPresets, setReminderPresets] = useState([]);
 
   // 初回マウント時にローカル保存を復元し履歴を初期化
   useEffect(() => {
@@ -142,6 +205,7 @@ export default function App () {
     setErrors([]);
     setWarnings([]);
     setAutoDownloadPending(false);
+    setReminderModalOpen(false);
     try {
       localStorage.removeItem('savedRows');
     } catch (e) {
@@ -267,14 +331,19 @@ export default function App () {
       } else if (mod && e.key.toLowerCase() === 'v' && e.shiftKey) {
         e.preventDefault();
         handleReadClipboard();
-      } else if (e.key === 'Escape' && editingId !== null) {
-        e.preventDefault();
-        cancelEdit();
+      } else if (e.key === 'Escape') {
+        if (reminderModalOpen) {
+          e.preventDefault();
+          setReminderModalOpen(false);
+        } else if (editingId !== null) {
+          e.preventDefault();
+          cancelEdit();
+        }
       }
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isValid, editingId]);
+  }, [isValid, editingId, reminderModalOpen]);
 
   // ページ読み込み時に URL パラメータまたはクリップボードから読込
   useEffect(() => {
@@ -313,6 +382,125 @@ export default function App () {
       alert('ICSファイルの生成に失敗しました');
       console.error('failed to generate ICS', e);
     }
+  }
+
+  function openReminderModal() {
+    const currentRows = rowsRef.current;
+    if (currentRows.length === 0) return;
+    const tagState = {};
+    currentRows.forEach(r => {
+      const key = r.tag || '';
+      if (!(key in tagState)) tagState[key] = true;
+    });
+    const availablePresets = REMINDER_KEYWORD_PRESETS.filter(preset =>
+      currentRows.some(row => preset.test(row))
+    );
+    const keywordState = {};
+    availablePresets.forEach(preset => {
+      keywordState[preset.key] = preset.defaultSelected;
+    });
+    setReminderPresets(availablePresets);
+    setReminderFilter({
+      tags: tagState,
+      keywords: keywordState,
+      sortBy: 'date',
+      sortDir: 'asc'
+    });
+    setReminderModalOpen(true);
+  }
+
+  function toggleReminderTag(tagKey) {
+    setReminderFilter(prev => ({
+      ...prev,
+      tags: {
+        ...prev.tags,
+        [tagKey]: !(prev.tags?.[tagKey] ?? true)
+      }
+    }));
+  }
+
+  function toggleReminderKeyword(keywordKey) {
+    setReminderFilter(prev => ({
+      ...prev,
+      keywords: {
+        ...prev.keywords,
+        [keywordKey]: !(prev.keywords?.[keywordKey] ?? true)
+      }
+    }));
+  }
+
+  function changeReminderSort(sortBy) {
+    setReminderFilter(prev => ({
+      ...prev,
+      sortBy
+    }));
+  }
+
+  function changeReminderSortDir(sortDir) {
+    setReminderFilter(prev => ({
+      ...prev,
+      sortDir
+    }));
+  }
+
+  function getReminderCandidates() {
+    if (!reminderFilter) return [];
+    let filtered = [...rowsRef.current];
+    filtered = filtered.filter(row => {
+      const tagKey = row.tag || '';
+      if (reminderFilter.tags && Object.keys(reminderFilter.tags).length) {
+        const allowed = reminderFilter.tags[tagKey];
+        if (allowed === false) return false;
+      }
+      for (const preset of reminderPresets) {
+        if (!reminderFilter.keywords?.[preset.key] && preset.test(row)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    const sortBy = reminderFilter.sortBy ?? 'date';
+    const sortDir = reminderFilter.sortDir ?? 'asc';
+    if (sortBy === 'summary') {
+      filtered.sort((a, b) => a.summary.localeCompare(b.summary, 'ja'));
+    } else if (sortBy === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = a.tag || '';
+        const tagB = b.tag || '';
+        if (tagA !== tagB) return tagA.localeCompare(tagB, 'ja');
+        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+        if (a.start !== b.start) return a.start < b.start ? -1 : 1;
+        return 0;
+      });
+    } else {
+      filtered = sortRows(filtered);
+    }
+
+    if (sortDir === 'desc') {
+      filtered.reverse();
+    }
+    return filtered;
+  }
+
+  function launchReminderShortcut() {
+    const candidates = getReminderCandidates();
+    if (candidates.length === 0) {
+      alert('リマインダーに送る予定が選択されていません');
+      return;
+    }
+    const payload = buildReminderPayload(candidates);
+    const json = JSON.stringify(payload);
+    const base64 = encodeBase64Utf8(json);
+    const shortcutName = encodeURIComponent(REMINDER_SHORTCUT_NAME);
+    const textParam = encodeURIComponent(base64);
+    const shortcutUrl = `shortcuts://x-callback-url/run-shortcut?name=${shortcutName}&input=text&text=${textParam}`;
+    setReminderModalOpen(false);
+    setToast('リマインダー用ショートカットを開きます');
+    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => {
+      window.location.href = shortcutUrl;
+    }, 120);
   }
 
   function renderRow(r, idx = 0, arr = []) {
@@ -393,6 +581,7 @@ export default function App () {
             </div>
             <div className="button-row" style={{marginTop: '0.5rem'}}>
               <button className="primary" disabled={!isValid} onClick={handleGenerate}>カレンダーに追加</button>
+              <button disabled={rows.length === 0} onClick={openReminderModal}>リマインダーに追加</button>
             </div>
           </>
         )
@@ -409,6 +598,7 @@ export default function App () {
       {rows.length > 0 && editingId === null && (
         <div className="button-row" style={{marginTop: '0.5rem'}}>
           <button onClick={clearAll}>クリア</button>
+          <button onClick={openReminderModal} disabled={rows.length === 0}>リマインダーに追加</button>
         </div>
       )}
 
@@ -496,6 +686,122 @@ export default function App () {
 
     </div>
     {toast && <div className="toast">{toast}</div>}
+    {reminderModalOpen && reminderFilter && (
+      <div className="modal-backdrop" role="presentation" onClick={() => setReminderModalOpen(false)}>
+        <div className="modal" role="dialog" aria-modal="true" aria-label="リマインダーに追加" onClick={e => e.stopPropagation()}>
+          <h2>リマインダーに追加</h2>
+          <p className="modal-description">
+            iPhone のリマインダーに追加したい予定を選び、並び順を確認してください。<br />
+            合致する項目がショートカット <code>{REMINDER_SHORTCUT_NAME}</code> に送信されます。
+          </p>
+          <div className="modal-section">
+            <h3>ソート条件</h3>
+            <div className="modal-sort">
+              <label>
+                <input
+                  type="radio"
+                  name="reminder-sort"
+                  checked={(reminderFilter.sortBy ?? 'date') === 'date'}
+                  onChange={() => changeReminderSort('date')}
+                /> 日付順
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="reminder-sort"
+                  checked={reminderFilter.sortBy === 'summary'}
+                  onChange={() => changeReminderSort('summary')}
+                /> 科目名順
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="reminder-sort"
+                  checked={reminderFilter.sortBy === 'tag'}
+                  onChange={() => changeReminderSort('tag')}
+                /> タグ順
+              </label>
+              <label>
+                <span>→</span>
+                <select
+                  value={reminderFilter.sortDir}
+                  onChange={e => changeReminderSortDir(e.target.value)}
+                >
+                  <option value="asc">昇順</option>
+                  <option value="desc">降順</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="modal-section">
+            <h3>タグで絞り込み</h3>
+            <div className="modal-checkbox-grid">
+              {Object.entries(reminderFilter.tags).map(([tagKey, enabled]) => (
+                <label key={tagKey || 'untagged'}>
+                  <input
+                    type="checkbox"
+                    checked={enabled !== false}
+                    onChange={() => toggleReminderTag(tagKey)}
+                  />
+                  {tagKey ? tagKey : 'タグ未設定'}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {reminderPresets.length > 0 && (
+            <div className="modal-section">
+              <h3>完了済みなどのキーワード</h3>
+              <p className="modal-subtext">チェックを外したキーワードを含む予定は除外されます。</p>
+              <div className="modal-checkbox-grid">
+                {reminderPresets.map(preset => (
+                  <label key={preset.key}>
+                    <input
+                      type="checkbox"
+                      checked={reminderFilter.keywords?.[preset.key] !== false}
+                      onChange={() => toggleReminderKeyword(preset.key)}
+                    />
+                    {preset.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="modal-section">
+            <h3>プレビュー ({getReminderCandidates().length} 件)</h3>
+            <div className="modal-preview">
+              {getReminderCandidates().length === 0 ? (
+                <p>条件に一致する予定がありません。</p>
+              ) : (
+                <ul>
+                  {getReminderCandidates().map(ev => (
+                    <li key={ev.id}>
+                      <span className="preview-date">{ev.date} {ev.start}-{ev.end}</span>
+                      <span className="preview-summary">{ev.summary}</span>
+                      {ev.tag && <span className="preview-tag">[{ev.tag}]</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button onClick={() => setReminderModalOpen(false)}>キャンセル</button>
+            <button
+              className="primary"
+              disabled={getReminderCandidates().length === 0}
+              onClick={launchReminderShortcut}
+            >
+              リマインダーに送信
+            </button>
+          </div>
+          <p className="modal-footnote">※ iPhone / iPad の Safari で開くとショートカットが起動します。</p>
+        </div>
+      </div>
+    )}
     </>
   );
 }
