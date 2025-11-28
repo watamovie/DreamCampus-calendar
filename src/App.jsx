@@ -315,6 +315,80 @@ export default function App () {
     }
   }
 
+  // Render edit form for mobile
+  function renderMobileEdit(r) {
+    if (!r) return null;
+    const invalidDate = !r.date;
+    const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
+    const invalidEnd = !/^\d{2}:\d{2}$/.test(r.end);
+    const invalidSummary = !r.summary.trim();
+    const warnTag = !r.tag;
+    const warnDesc = !r.description.trim();
+    const warnLoc = r.tag === '対面' && !r.location;
+
+    return (
+      <div className="mobile-edit-form">
+        <div className="form-group">
+          <label>日付</label>
+          <input type="date" value={r.date}
+            className={invalidDate ? 'invalid' : ''}
+            onChange={e => updateRow(r.id, 'date', e.target.value)} />
+        </div>
+        <div className="form-group" style={{ flexDirection: 'row', gap: '12px' }}>
+          <div style={{ flex: 1 }} className="form-group">
+            <label>開始</label>
+            <input type="time" value={r.start}
+              className={invalidStart ? 'invalid' : ''}
+              onChange={e => updateRow(r.id, 'start', e.target.value)} />
+          </div>
+          <div style={{ flex: 1 }} className="form-group">
+            <label>終了</label>
+            <input type="time" value={r.end}
+              className={invalidEnd ? 'invalid' : ''}
+              onChange={e => updateRow(r.id, 'end', e.target.value)} />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>科目</label>
+          <input value={r.summary}
+            className={invalidSummary ? 'invalid' : ''}
+            placeholder="科目名"
+            onChange={e => updateRow(r.id, 'summary', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>分類</label>
+          <select value={r.tag}
+            className={warnTag ? 'warning' : ''}
+            onChange={e => updateRow(r.id, 'tag', e.target.value)}>
+            <option value="">選択</option>
+            <option value="対面">対面</option>
+            <option value="zoom">zoom</option>
+            <option value="オンデマ">オンデマ</option>
+            <option value="見学">見学</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>場所</label>
+          <input value={r.location}
+            className={warnLoc ? 'warning' : ''}
+            placeholder="教室など"
+            onChange={e => updateRow(r.id, 'location', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>説明</label>
+          <textarea rows={4} value={r.description}
+            className={warnDesc ? 'warning' : ''}
+            placeholder="詳細説明"
+            onChange={e => updateRow(r.id, 'description', e.target.value)} />
+        </div>
+
+        <div className="delete-btn-container">
+          <button className="delete-btn" onClick={() => deleteRow(r.id)}>このイベントを削除</button>
+        </div>
+      </div>
+    );
+  }
+
   function renderRow(r, idx = 0, arr = []) {
     const invalidDate = !r.date;
     const invalidStart = !/^\d{2}:\d{2}$/.test(r.start);
@@ -471,18 +545,20 @@ export default function App () {
                   </div>
                 </div>
               ))}
-              <div className="button-row" style={{marginTop: '0.5rem'}}>
-                <button onClick={addRow}>追加</button>
+              <div className="button-row" style={{marginTop: '20px'}}>
+                <button style={{width: '100%'}} onClick={addRow}>＋ 新しいイベントを追加</button>
               </div>
             </>
           ) : (
             <div className="edit-screen">
-              <button onClick={cancelEdit} style={{marginBottom: '0.5rem'}}>戻る</button>
-              <table className="mobile-edit">
-                <tbody>
-                  {renderRow(rows.find(r => r.id === editingId) ?? BLANK_EVENT)}
-                </tbody>
-              </table>
+              <div className="edit-screen-header">
+                 <button onClick={cancelEdit}>キャンセル</button>
+                 <h2>イベント編集</h2>
+                 <button onClick={cancelEdit} style={{fontWeight: 'bold'}}>完了</button>
+              </div>
+              <div className="edit-screen-body">
+                {renderMobileEdit(rows.find(r => r.id === editingId) ?? BLANK_EVENT)}
+              </div>
             </div>
           )}
         </div>
