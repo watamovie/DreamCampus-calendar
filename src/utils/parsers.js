@@ -1,5 +1,6 @@
 /* DESCRIPTION から分類タグ推定 */
 export function classifyTag (desc) {
+    if (!desc) return '';
     if (/非同期/.test(desc)) return 'オンデマ';
     if (/遠隔授業.*同期/.test(desc) || /Zoom/i.test(desc)) return 'zoom';
     return /遠隔授業/.test(desc) ? 'オンデマ' : '対面';
@@ -7,6 +8,7 @@ export function classifyTag (desc) {
   
 /* DESCRIPTION から場所を抽出 */
 export function extractLocation(desc) {
+  if (!desc) return '';
   // 教員名 "(○○)" の後ろを優先的に拾う
   let m = desc.match(/\/\s*\([^/]*\)\s*\/\s*([^/]+?)(?:\s*\/|$)/);
   if (m) return m[1].trim();
