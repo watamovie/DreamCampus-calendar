@@ -23,14 +23,14 @@ iOS ショートカット経由で受け取った **イベント JSON** から
 | ローカル保存 | 編集内容を自動保存し、次回アクセス時に復元 |
 
 ## iOS ショートカットの流れ
-1. 時間割ページを共有シートから [ショートカット](https://www.icloud.com/shortcuts/7f518145f2c14b918b009dae2c71463e) を実行
+1. 時間割ページを共有シートから [ショートカット](https://www.icloud.com/shortcuts/304b088773754e27b9d0202a3ca294cd) を実行
 2. JavaScript がページ上で走り時間割を JSON 化
 3. 生成した JSON を UTF-8 で Base64 化し、URL エンコードして `?data=` 付きで本アプリを開く
    (例: `encodeURIComponent(btoa(unescape(encodeURIComponent(json))))`)
 4. ページ読み込み時に `data` パラメータを自動解析。無い場合はクリップボードを読込
 
 ## 使い方
-1. [iOS ショートカット](https://www.icloud.com/shortcuts/7f518145f2c14b918b009dae2c71463e) を実行すると本アプリが自動で開き、予定が入力されます
+1. [iOS ショートカット](https://www.icloud.com/shortcuts/304b088773754e27b9d0202a3ca294cd) を実行すると本アプリが自動で開き、予定が入力されます
 2. そのまま **カレンダーに追加** を押せますが、受け渡しに失敗したり内容を調整したい場合は Web UI で貼り付け・編集してください
 3. 予定を確認したら **カレンダーに追加** ボタンで .ics を取得できます。編集内容は自動保存されます
 
