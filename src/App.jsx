@@ -149,6 +149,40 @@ export default function App () {
     }
   }
 
+  function toMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function deduplicateEvents(events) {
+    return events.filter((a, i) => {
+      const aStart = toMinutes(a.start);
+      const aEnd = toMinutes(a.end);
+      const aDuration = aEnd - aStart;
+
+      // Check if 'a' is shadowed by any other event 'b'
+      const isShadowed = events.some((b, j) => {
+        if (i === j) return false;
+        if (a.date !== b.date || a.summary !== b.summary) return false;
+
+        const bStart = toMinutes(b.start);
+        const bEnd = toMinutes(b.end);
+        const bDuration = bEnd - bStart;
+
+        // B includes A
+        if (bStart <= aStart && bEnd >= aEnd) {
+          if (bDuration > aDuration) return true;
+          // If exact duplicate, keep the first one (remove if j < i)
+          if (bDuration === aDuration && j < i) return true;
+        }
+        return false;
+      });
+
+      return !isShadowed;
+    });
+  }
+
   /* 2-2. クリップボード読み取りボタン */
   async function handleReadClipboard (silent = false) {
     setAutoDownloadPending(false);
@@ -170,7 +204,8 @@ export default function App () {
     try {
       // 先頭/末尾のゴミ除去
       const cleaned = text.trim().replace(/^[^\[]*/, '').replace(/[^\]]*$/, '');
-      const arr = JSON.parse(cleaned);
+      const rawArr = JSON.parse(cleaned);
+      const arr = deduplicateEvents(rawArr);
 
       const mapped = arr.map(ev => {
         const tag = classifyTag(ev.description || '');
