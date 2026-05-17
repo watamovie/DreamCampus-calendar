@@ -1,9 +1,10 @@
 /* DESCRIPTION から分類タグ推定 */
 export function classifyTag (desc) {
     if (!desc) return '';
-    if (/非同期/.test(desc)) return 'オンデマ';
-    if (/遠隔授業.*同期/.test(desc) || /Zoom/i.test(desc)) return 'zoom';
-    return /遠隔授業/.test(desc) ? 'オンデマ' : '対面';
+    const normalized = desc.normalize('NFKC');
+    if (/オンデマ/.test(normalized) || /非同期/.test(normalized)) return 'オンデマ';
+    if (/遠隔授業.*同期/.test(normalized) || /Zoom/i.test(normalized)) return 'zoom';
+    return /遠隔授業/.test(normalized) ? 'オンデマ' : '対面';
   }
   
 /* DESCRIPTION から場所を抽出 */
